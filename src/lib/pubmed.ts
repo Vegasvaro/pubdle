@@ -3,6 +3,18 @@ import { getTopicByslug } from "./topics";
 const ESEARCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi";
 const EFETCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi";
 
+// API key opcional de NCBI. Si está definida, subimos de 3 a 10 req/seg.
+// Se añade automáticamente a todas las llamadas a E-utilities.
+const NCBI_API_KEY = (import.meta.env.VITE_NCBI_API_KEY ?? "").trim();
+
+function withApiKey(params: URLSearchParams): URLSearchParams {
+  if (NCBI_API_KEY) params.set("api_key", NCBI_API_KEY);
+  // tool & email son recomendados por NCBI para identificar el cliente.
+  params.set("tool", "pubdle");
+  params.set("email", "pubdle@example.com");
+  return params;
+}
+
 // Tipos de publicación vetados. Todos son [Publication Type] válidos en PubMed
 // EXCEPTO "Books and Documents", que se gestiona como subset filter (ver abajo).
 const EXCLUDED_TYPES = [
@@ -42,7 +54,7 @@ export async function searchPmids(topicSlug: string, excludePmids: string[] = []
   // Excluimos también el subset "Books and Documents" (Bookshelf) que no es un Publication Type.
   const term = `(${topic.searchTerm}) AND hasabstract[text] AND english[lang] AND "free full text"[sb] NOT "pubmed books and documents"[sb] ${excludeClause}`;
 
-  const params = new URLSearchParams({
+  const params = withApiKey(new URLSearchParams({
     db: "pubmed",
     term,
     retmax: String(retmax),
@@ -50,7 +62,7 @@ export async function searchPmids(topicSlug: string, excludePmids: string[] = []
     sort: "relevance",
     datetype: "pdat",
     reldate: "1825",
-  });
+  }));
 
   const res = await fetch(`${ESEARCH}?${params.toString()}`);
   if (!res.ok) throw new Error("PubMed search failed");
@@ -60,12 +72,12 @@ export async function searchPmids(topicSlug: string, excludePmids: string[] = []
 }
 
 export async function fetchArticle(pmid: string): Promise<PubMedArticle | null> {
-  const params = new URLSearchParams({
+  const params = withApiKey(new URLSearchParams({
     db: "pubmed",
     id: pmid,
     retmode: "xml",
     rettype: "abstract",
-  });
+  }));
   const res = await fetch(`${EFETCH}?${params.toString()}`);
   if (!res.ok) return null;
   const xml = await res.text();
