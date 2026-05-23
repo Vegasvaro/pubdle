@@ -20,10 +20,9 @@ export default function AboutPage() {
           </h1>
           <p className="text-lg text-[var(--color-muted-foreground)] leading-relaxed mb-8">
             Pubdle es una forma sencilla de mantenerte al día en ciencias de la salud.
-            Al estilo de un Wordle diario, cada día revelamos un artículo científico
-            de PubMed/NCBI <strong>con acceso completo y gratuito</strong>, para que
-            construyas el hábito de leer ciencia sin saturarte con la avalancha de
-            publicaciones.
+            Cada día seleccionamos un artículo científico de PubMed/NCBI{" "}
+            <strong>con acceso completo y gratuito</strong>, para que construyas el
+            hábito de leer ciencia sin saturarte con la avalancha de publicaciones.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
@@ -60,7 +59,7 @@ export default function AboutPage() {
               </li>
               <li className="flex gap-3">
                 <span className="font-mono text-[var(--color-primary)] flex-shrink-0">02.</span>
-                <span>Te mostramos el abstract con la revelación tipo Wordle.</span>
+                <span>Te mostramos el título y el abstract traducidos al español.</span>
               </li>
               <li className="flex gap-3">
                 <span className="font-mono text-[var(--color-primary)] flex-shrink-0">03.</span>

@@ -1,6 +1,6 @@
 # Pubdle
 
-Pequeño "Wordle de artículos científicos": cada día revela un artículo de [PubMed/NCBI](https://pubmed.ncbi.nlm.nih.gov) en una de 25 especialidades de ciencias de la salud. **Solo artículos con _Free full text_**, para que puedas leer el paper completo sin barreras.
+Un artículo científico al día. Pubdle revela cada día un artículo de [PubMed/NCBI](https://pubmed.ncbi.nlm.nih.gov) en una de 25 especialidades de ciencias de la salud. **Solo artículos con _Free full text_**, para que puedas leer el paper completo sin barreras.
 
 Esta versión es **100% cliente** (sin backend, sin base de datos) y consume directamente la API pública E-utilities de NCBI. El estado del usuario (favoritos, lecturas del día, comentarios, reacciones, plan) se guarda en `localStorage`.
 
