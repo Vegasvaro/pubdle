@@ -7,7 +7,12 @@ import ArticleCard from "@/components/ArticleCard";
 import DailySlots from "@/components/DailySlots";
 import TopicSelector from "@/components/TopicSelector";
 import { Button } from "@/components/Button";
-import { getArticleForTopic, getDeterministicDailyArticle, type PubMedArticle } from "@/lib/pubmed";
+import {
+  getArticleForTopic,
+  getDailyTopicSlug,
+  getDeterministicDailyArticle,
+  type PubMedArticle,
+} from "@/lib/pubmed";
 import { TOPICS } from "@/lib/topics";
 import {
   TIER_LIMITS,
@@ -35,6 +40,7 @@ function getStoredDaily(): (DailyState & { date: string }) | null {
     const parsed = JSON.parse(raw);
     if (parsed.date !== todayKey()) return null;
     if (!parsed.article?.pmid || !parsed.article?.title || !parsed.article?.abstract) return null;
+    if (parsed.topic !== getDailyTopicSlug(todayKey(), TOPICS)) return null;
     return parsed;
   } catch {
     return null;

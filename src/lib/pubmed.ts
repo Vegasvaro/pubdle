@@ -170,6 +170,14 @@ function pickDailyTopicIndex(dateKey: string, topicCount: number): number {
   return idx;
 }
 
+/** Tema del día según las reglas actuales (mismo para todos los usuarios). */
+export function getDailyTopicSlug(
+  dateKey: string,
+  topics: { slug: string }[]
+): string {
+  return topics[pickDailyTopicIndex(dateKey, topics.length)].slug;
+}
+
 /**
  * Devuelve siempre el mismo artículo para todos los usuarios en un día dado.
  * El tema y el PMID se eligen de forma determinista a partir de `dateKey` (YYYY-MM-DD).
