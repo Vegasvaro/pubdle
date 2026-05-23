@@ -1,0 +1,28 @@
+# https://pubdle.com/robots.txt
+# Permite a buscadores indexar las páginas públicas de Pubdle.
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /login
+Disallow: /favorites
+Disallow: /history
+Disallow: /api/
+
+# Bots de IA: bloquear scraping para training (opcional, se puede quitar)
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+Sitemap: https://pubdle.com/sitemap.xml
