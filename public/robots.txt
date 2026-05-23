@@ -26,3 +26,4 @@ User-agent: PerplexityBot
 Disallow: /
 
 Sitemap: https://pubdle.com/sitemap.xml
+Sitemap: https://pubdle.com/api/sitemap
