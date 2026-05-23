@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "wouter";
 import { Clock, FlaskConical, Lock, RefreshCw, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -94,15 +94,28 @@ export default function AppPage() {
   }, []);
 
   useEffect(() => {
-    refreshState();
-    const onFocus = () => refreshState();
+    let lastDay = todayKey();
+    const tick = () => {
+      const key = todayKey();
+      if (key !== lastDay) {
+        lastDay = key;
+        if (tier === "free") {
+          setArticle(null);
+          setTopic("");
+          setAnimate(false);
+        }
+      }
+      refreshState();
+    };
+    tick();
+    const onFocus = () => tick();
     window.addEventListener("focus", onFocus);
-    const interval = setInterval(refreshState, 1500);
+    const interval = setInterval(tick, 1500);
     return () => {
       window.removeEventListener("focus", onFocus);
       clearInterval(interval);
     };
-  }, [refreshState]);
+  }, [refreshState, tier]);
 
   const loadFreeDaily = useCallback(async (force = false) => {
     if (!force) {
@@ -200,10 +213,20 @@ export default function AppPage() {
     setShowTopic(true);
   };
 
-  const dateLabel = useMemo(
-    () => new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }),
-    []
+  const [dateLabel, setDateLabel] = useState(() =>
+    new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })
   );
+
+  useEffect(() => {
+    const update = () => {
+      setDateLabel(
+        new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })
+      );
+    };
+    update();
+    const id = setInterval(update, 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[var(--color-background)]">

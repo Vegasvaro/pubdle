@@ -53,8 +53,9 @@ export const TIER_TOPIC_CHOICES: Record<Tier, number> = {
   pro: 10,
 };
 
+/** Fecha local del usuario (YYYY-MM-DD), alineada con medianoche del contador. */
 export function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
+  return new Date().toLocaleDateString("en-CA");
 }
 
 function readJson<T>(key: string, fallback: T): T {
