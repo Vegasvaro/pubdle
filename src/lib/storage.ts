@@ -3,6 +3,7 @@ import type { PubMedArticle } from "./pubmed";
 const KEYS = {
   reads: "pubdle:reads",
   favorites: "pubdle:favorites",
+  lists: "pubdle:lists",
   history: "pubdle:history",
   reactions: "pubdle:reactions",
   tier: "pubdle:tier",
@@ -158,13 +159,75 @@ export function removeFavorite(pmid: string) {
 export function setFavoriteList(pmid: string, list: string | undefined) {
   const favs = getFavorites().map((f) => (f.pmid === pmid ? { ...f, list } : f));
   writeJson(KEYS.favorites, favs);
+  if (list) ensureListExists(list);
 }
 
+/**
+ * Listas son una entidad propia: viven en KEYS.lists incluso cuando están vacías.
+ * Se devuelven combinadas con las listas implícitas que pudieran aparecer en
+ * favoritos antiguos (migración suave).
+ */
 export function getFavoriteLists(): string[] {
-  const favs = getFavorites();
-  const lists = new Set<string>();
-  favs.forEach((f) => f.list && lists.add(f.list));
-  return Array.from(lists).sort();
+  const explicit = readJson<string[]>(KEYS.lists, []);
+  const implicit = new Set<string>();
+  for (const f of getFavorites()) {
+    if (f.list) implicit.add(f.list);
+  }
+  const merged = new Set<string>([...explicit, ...implicit]);
+  return Array.from(merged).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
+}
+
+function ensureListExists(name: string) {
+  const current = readJson<string[]>(KEYS.lists, []);
+  if (current.includes(name)) return;
+  writeJson(KEYS.lists, [...current, name]);
+}
+
+/**
+ * Crea una lista vacía. Devuelve true si se creó, false si ya existía
+ * (case-insensitive).
+ */
+export function createFavoriteList(name: string): boolean {
+  const trimmed = name.trim();
+  if (!trimmed) return false;
+  const current = readJson<string[]>(KEYS.lists, []);
+  const collision = current.some((l) => l.toLowerCase() === trimmed.toLowerCase());
+  if (collision) return false;
+  writeJson(KEYS.lists, [...current, trimmed]);
+  return true;
+}
+
+/**
+ * Renombra una lista. Actualiza también el campo `list` de todos los favoritos
+ * que la usaran. Devuelve false si el nuevo nombre ya existe.
+ */
+export function renameFavoriteList(oldName: string, newName: string): boolean {
+  const trimmed = newName.trim();
+  if (!trimmed || trimmed === oldName) return false;
+  const current = readJson<string[]>(KEYS.lists, []);
+  if (current.some((l) => l !== oldName && l.toLowerCase() === trimmed.toLowerCase())) {
+    return false;
+  }
+  writeJson(
+    KEYS.lists,
+    current.map((l) => (l === oldName ? trimmed : l))
+  );
+  const favs = getFavorites().map((f) =>
+    f.list === oldName ? { ...f, list: trimmed } : f
+  );
+  writeJson(KEYS.favorites, favs);
+  return true;
+}
+
+/**
+ * Elimina una lista. Los favoritos que estaban en ella pasan a "sin lista"
+ * (no se borran los artículos, solo la asignación).
+ */
+export function deleteFavoriteList(name: string) {
+  const current = readJson<string[]>(KEYS.lists, []);
+  writeJson(KEYS.lists, current.filter((l) => l !== name));
+  const favs = getFavorites().map((f) => (f.list === name ? { ...f, list: undefined } : f));
+  writeJson(KEYS.favorites, favs);
 }
 
 export interface HistoryEntry {
