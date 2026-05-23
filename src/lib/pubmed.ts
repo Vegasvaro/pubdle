@@ -147,9 +147,33 @@ export async function getArticleForTopic(topicSlug: string, excludePmids: string
   return null;
 }
 
+const TOPIC_EPOCH = "2020-01-01";
+
+function shiftDateKey(dateKey: string, deltaDays: number): string {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + deltaDays);
+  return date.toLocaleDateString("en-CA");
+}
+
+/** Índice de tema determinista; nunca coincide con el tema final del día anterior. */
+function pickDailyTopicIndex(dateKey: string, topicCount: number): number {
+  let current = TOPIC_EPOCH;
+  let idx = Math.floor(mulberry32(hashString(TOPIC_EPOCH))() * topicCount);
+
+  while (current < dateKey) {
+    current = shiftDateKey(current, 1);
+    let next = Math.floor(mulberry32(hashString(current))() * topicCount);
+    if (next === idx) next = (next + 1) % topicCount;
+    idx = next;
+  }
+  return idx;
+}
+
 /**
  * Devuelve siempre el mismo artículo para todos los usuarios en un día dado.
  * El tema y el PMID se eligen de forma determinista a partir de `dateKey` (YYYY-MM-DD).
+ * El tema nunca se repite respecto al día anterior.
  */
 export async function getDeterministicDailyArticle(
   dateKey: string,
@@ -158,7 +182,7 @@ export async function getDeterministicDailyArticle(
   const seed = hashString(dateKey);
   const rand = mulberry32(seed);
 
-  const topicIdx = Math.floor(rand() * topics.length);
+  const topicIdx = pickDailyTopicIndex(dateKey, topics.length);
   const topicSlug = topics[topicIdx].slug;
 
   const pmids = await searchPmids(topicSlug, [], 60);
