@@ -48,7 +48,7 @@ export default async function handler(req: Request): Promise<Response> {
   try {
     const upstream = await fetch(target.toString(), {
       method: "GET",
-      headers: { accept: incoming.headers.get("accept") ?? "*/*" },
+      headers: { accept: req.headers.get("accept") ?? "*/*" },
     });
 
     const contentType =
