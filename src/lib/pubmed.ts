@@ -1,18 +1,17 @@
 import { getTopicByslug } from "./topics";
 
-const ESEARCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi";
-const EFETCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi";
+// Llamamos a nuestro proxy serverless `/api/pubmed`, que reenvía la petición
+// a NCBI E-utilities añadiendo la API key del lado servidor. Así la clave
+// nunca queda expuesta en el bundle del navegador. En desarrollo, el proxy
+// de Vite hace lo mismo (ver vite.config.ts).
+const PROXY = "/api/pubmed";
 
-// API key opcional de NCBI. Si está definida, subimos de 3 a 10 req/seg.
-// Se añade automáticamente a todas las llamadas a E-utilities.
-const NCBI_API_KEY = (import.meta.env.VITE_NCBI_API_KEY ?? "").trim();
-
-function withApiKey(params: URLSearchParams): URLSearchParams {
-  if (NCBI_API_KEY) params.set("api_key", NCBI_API_KEY);
-  // tool & email son recomendados por NCBI para identificar el cliente.
-  params.set("tool", "pubdle");
-  params.set("email", "pubdle@example.com");
-  return params;
+function buildProxyUrl(
+  endpoint: "esearch" | "efetch",
+  params: URLSearchParams
+): string {
+  params.set("endpoint", endpoint);
+  return `${PROXY}?${params.toString()}`;
 }
 
 // Tipos de publicación vetados. Todos son [Publication Type] válidos en PubMed
@@ -54,7 +53,7 @@ export async function searchPmids(topicSlug: string, excludePmids: string[] = []
   // Excluimos también el subset "Books and Documents" (Bookshelf) que no es un Publication Type.
   const term = `(${topic.searchTerm}) AND hasabstract[text] AND english[lang] AND "free full text"[sb] NOT "pubmed books and documents"[sb] ${excludeClause}`;
 
-  const params = withApiKey(new URLSearchParams({
+  const params = new URLSearchParams({
     db: "pubmed",
     term,
     retmax: String(retmax),
@@ -62,9 +61,9 @@ export async function searchPmids(topicSlug: string, excludePmids: string[] = []
     sort: "relevance",
     datetype: "pdat",
     reldate: "1825",
-  }));
+  });
 
-  const res = await fetch(`${ESEARCH}?${params.toString()}`);
+  const res = await fetch(buildProxyUrl("esearch", params));
   if (!res.ok) throw new Error("PubMed search failed");
   const data = await res.json();
   const ids: string[] = data?.esearchresult?.idlist ?? [];
@@ -72,13 +71,13 @@ export async function searchPmids(topicSlug: string, excludePmids: string[] = []
 }
 
 export async function fetchArticle(pmid: string): Promise<PubMedArticle | null> {
-  const params = withApiKey(new URLSearchParams({
+  const params = new URLSearchParams({
     db: "pubmed",
     id: pmid,
     retmode: "xml",
     rettype: "abstract",
-  }));
-  const res = await fetch(`${EFETCH}?${params.toString()}`);
+  });
+  const res = await fetch(buildProxyUrl("efetch", params));
   if (!res.ok) return null;
   const xml = await res.text();
   return parseArticleXml(xml, pmid);
