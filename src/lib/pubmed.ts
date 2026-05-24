@@ -51,7 +51,10 @@ export async function searchPmids(topicSlug: string, excludePmids: string[] = []
   const excludeClause = EXCLUDED_TYPES.map((t) => `NOT "${t}"[Publication Type]`).join(" ");
   // Solo artículos con "Free full text" (loattrfree full text[sb]) y con abstract.
   // Excluimos también el subset "Books and Documents" (Bookshelf) que no es un Publication Type.
-  const term = `(${topic.searchTerm}) AND hasabstract[text] AND english[lang] AND "free full text"[sb] NOT "pubmed books and documents"[sb] ${excludeClause}`;
+  // `humans[mh]` restringe a estudios etiquetados con el MeSH "Humans": deja
+  // fuera artículos puramente sobre animales y el ámbito veterinario (que carecen
+  // de esa etiqueta). Es el filtro canónico de PubMed para investigación humana.
+  const term = `(${topic.searchTerm}) AND hasabstract[text] AND english[lang] AND "free full text"[sb] AND humans[mh] NOT "veterinary medicine"[mh] NOT "pubmed books and documents"[sb] ${excludeClause}`;
 
   const params = new URLSearchParams({
     db: "pubmed",
